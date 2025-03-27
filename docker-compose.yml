@@ -1,0 +1,52 @@
+version: '3'
+
+services:
+  ryu:
+    image: sdn-ryu-mininet
+    container_name: sdn-controller
+    privileged: true
+    ports:
+      - "6633:6633"
+      - "8080:8080"
+    command: ryu-manager --verbose simple_switch.py
+    volumes:
+      - ./:/root/sdn
+    networks:
+      - sdn-net
+
+  mininet:
+    image: sdn-ryu-mininet
+    container_name: sdn-mininet
+    privileged: true
+    depends_on:
+      - ryu
+    environment:
+      - CONTROLLER_IP=ryu
+      - TERM=xterm
+    volumes:
+      - ./:/root/sdn
+    command: python3 simple_topo.py
+    networks:
+      - sdn-net
+    tty: true
+    stdin_open: true
+
+  # 一体化环境 - 单个容器中同时运行Ryu和Mininet
+  all-in-one:
+    image: sdn-ryu-mininet
+    container_name: sdn-all-in-one
+    privileged: true
+    ports:
+      - "6633:6633"
+      - "8080:8080"
+    volumes:
+      - ./:/root/sdn
+    command: bash -c './run_network.sh auto'
+    tty: true
+    stdin_open: true
+    environment:
+      - TERM=xterm
+
+networks:
+  sdn-net:
+    driver: bridge 
