@@ -62,7 +62,7 @@ run-network:
 		-p 6633:6633 \
 		-p 8080:8080 \
 		-e TERM=xterm \
-		$(IMAGE_NAME) bash -c './run_network.sh auto; exit 0'
+		$(IMAGE_NAME) bash -c './run_network.sh auto'
 	@echo "网络环境已停止"
 
 # 仅运行Ryu控制器
@@ -78,12 +78,15 @@ run-ryu:
 # 仅运行Mininet拓扑（连接到独立运行的控制器）
 run-mininet:
 	@echo "启动Mininet拓扑..."
+	@CONTROLLER_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(CONTAINER_NAME)-ryu 2>/dev/null || echo "127.0.0.1"); \
+	echo "使用控制器 IP: $$CONTROLLER_IP"; \
 	docker run --rm -it \
-		--name $(CONTAINER_NAME)-mininet \
-		--privileged \
-		-e TERM=xterm \
-		-e CONTROLLER_IP=$(shell docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(CONTAINER_NAME)-ryu 2>/dev/null || echo "127.0.0.1") \
-		$(IMAGE_NAME) python3 simple_topo.py
+	--name $(CONTAINER_NAME)-mininet \
+	--privileged \
+	-e TERM=xterm \
+	-e CONTROLLER_IP=$$CONTROLLER_IP \
+	$(IMAGE_NAME) bash -c "python3 simple_topo.py"
+
 
 # 查看容器日志
 logs:

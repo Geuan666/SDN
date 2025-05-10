@@ -63,18 +63,18 @@ RUN python3 -c "import mininet; print('Mininet 已成功安装')"
 # 设置工作目录
 WORKDIR /root/sdn
 
-# 创建启动脚本
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
 # 复制项目文件
 COPY . /root/sdn/
 
-# 确保run_network.sh是可执行的
+# 复制启动脚本（要放在 COPY . 之后，以免被覆盖）
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# 确保 run_network.sh 是可执行的
 RUN chmod +x /root/sdn/run_network.sh
 
 # 暴露Ryu控制器端口
 EXPOSE 6633 8080
 
 # 容器启动命令
-ENTRYPOINT ["/start.sh"] 
+CMD ["/bin/bash"]
