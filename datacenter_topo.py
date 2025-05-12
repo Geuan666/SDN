@@ -10,18 +10,6 @@ import time
 import os
 import sys
 
-class LinuxRouter( Node ):
-    "A Node with IP forwarding enabled."
-
-    def config( self, **params ):
-        super( LinuxRouter, self ).config( **params )
-        # 开启 IP 转发
-        self.cmd( 'sysctl -w net.ipv4.ip_forward=1' )
-
-    def terminate( self ):
-        self.cmd( 'sysctl -w net.ipv4.ip_forward=0' )
-        super( LinuxRouter, self ).terminate()
-
 
 def createDatacenterNet():
     # 创建网络并添加节点
@@ -35,24 +23,24 @@ def createDatacenterNet():
     # 添加交换机 - 外部网络
     info('*** 添加外部网络交换机\n')
     # 确保dpid为1，与控制器一致
-    external_switch = net.addSwitch('ex', dpid='0000000000000001',protocols='OpenFlow13')
+    external_switch = net.addSwitch('ex', dpid='0000000000000001', protocols='OpenFlow13')
 
     # 添加交换机 - 数据中心网络
     info('*** 添加数据中心网络交换机\n')
     # 边缘路由器 - 确保dpid为2，与控制器中的edge_router_dpid=2一致
-    edge_router = net.addSwitch('ed', dpid='0000000000000002',protocols='OpenFlow13')
+    edge_router = net.addSwitch('ed', dpid='0000000000000002', protocols='OpenFlow13')
 
     # 汇聚层交换机
-    spine1 = net.addSwitch('s1', dpid='0000000000000003',protocols='OpenFlow13')
-    spine2 = net.addSwitch('s2', dpid='0000000000000004',protocols='OpenFlow13')
-    spine3 = net.addSwitch('s3', dpid='0000000000000005',protocols='OpenFlow13')
+    spine1 = net.addSwitch('s1', dpid='0000000000000003', protocols='OpenFlow13')
+    spine2 = net.addSwitch('s2', dpid='0000000000000004', protocols='OpenFlow13')
+    spine3 = net.addSwitch('s3', dpid='0000000000000005', protocols='OpenFlow13')
 
     # 接入层交换机
-    leaf1 = net.addSwitch('l1', dpid='0000000000000006',protocols='OpenFlow13')
-    leaf2 = net.addSwitch('l2', dpid='0000000000000007',protocols='OpenFlow13')
-    leaf3 = net.addSwitch('l3', dpid='0000000000000008',protocols='OpenFlow13')
-    leaf4 = net.addSwitch('l4', dpid='0000000000000009',protocols='OpenFlow13')
-    leaf5 = net.addSwitch('l5', dpid='0000000000000010',protocols='OpenFlow13')
+    leaf1 = net.addSwitch('l1', dpid='0000000000000006', protocols='OpenFlow13')
+    leaf2 = net.addSwitch('l2', dpid='0000000000000007', protocols='OpenFlow13')
+    leaf3 = net.addSwitch('l3', dpid='0000000000000008', protocols='OpenFlow13')
+    leaf4 = net.addSwitch('l4', dpid='0000000000000009', protocols='OpenFlow13')
+    leaf5 = net.addSwitch('l5', dpid='0000000000000010', protocols='OpenFlow13')
 
     # 添加主机 - 外部网络 (使用/16掩码，与控制器中的10.0.0.0/16匹配)
     info('*** 添加外部网络主机\n')
@@ -136,31 +124,10 @@ def createDatacenterNet():
     net.addLink(leaf5, h5b)
     net.addLink(leaf5, h5c)
 
-    info('*** 添加路由器节点\n')
-    # 路由器0：承载外部网络网关 10.0.0.254/16，连接到 external_switch
-    r0 = net.addHost('r0', cls=LinuxRouter,
-                     ip='10.0.0.254/16',
-                     mac='00:00:00:00:00:ff')
-    r1 = net.addHost('r1', cls=LinuxRouter,
-                     ip='10.1.0.254/16',
-                     mac='00:00:00:00:00:ff')
-
-    info('*** 在路由器和交换机之间添加链路\n')
-    net.addLink(r0, external_switch)
-    net.addLink(r1, edge_router)
-
-    # 添加 r0–r1 直连链路，使用 10.254.0.0/30
-    info('*** 添加路由器互联链路\n')
-    net.addLink( r0, r1, intfName1='r0-eth2', intfName2='r1-eth2' )
-
     # 启动网络
     info('*** 启动网络\n')
     net.build()
     c0.start()
-
-    # 分配直连子接口 IP
-    r0.cmd('ifconfig r0-eth2 10.254.0.1/30')
-    r1.cmd('ifconfig r1-eth2 10.254.0.2/30')
 
     # 启动所有交换机
     info('*** 启动交换机\n')
@@ -194,12 +161,30 @@ def createDatacenterNet():
     h5a.cmd('ip route add default via 10.1.0.254')
     h5b.cmd('ip route add default via 10.1.0.254')
     h5c.cmd('ip route add default via 10.1.0.254')
-    r0.cmd( 'ip route add 10.1.0.0/16 via 10.254.0.2' )
-    r1.cmd( 'ip route add 10.0.0.0/16 via 10.254.0.1' )
+
+    # 初始化网关的ARP表
+    info('*** 初始化主机ARP表\n')
+    # 外部网络主机的网关ARP
+    h6.cmd('arp -s 10.0.0.254 00:00:00:00:00:f0')
+    h7.cmd('arp -s 10.0.0.254 00:00:00:00:00:f0')
+    h8.cmd('arp -s 10.0.0.254 00:00:00:00:00:f0')
+
+    # 数据中心网络主机的网关ARP
+    h1a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h1b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h2a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h2b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h3a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h3b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h4a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h4b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h5a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h5b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    h5c.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
 
     # 等待控制器连接
     info('*** 等待控制器连接\n')
-    time.sleep(5)
+    time.sleep(10)  # 增加到10秒，确保控制器有足够时间初始化
 
     return net
 
