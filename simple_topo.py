@@ -9,6 +9,7 @@ import time
 import os
 import sys
 
+
 def createNet():
     # 创建网络并添加节点
     net = Mininet(controller=RemoteController, link=TCLink, switch=OVSKernelSwitch)
@@ -46,7 +47,7 @@ def createNet():
     net.build()
     info('*** 启动控制器\n')
     c0.start()
-    
+
     info('*** 启动交换机\n')
     s1.start([c0])
     s2.start([c0])
@@ -59,17 +60,18 @@ def createNet():
     # 返回网络
     return net
 
+
 if __name__ == '__main__':
     setLogLevel('info')
     net = createNet()
-    
+
     # 确保stdout/stderr被刷新
     sys.stdout.flush()
     sys.stderr.flush()
-    
+
     info('*** 运行命令行界面\n')
     # 使用阻塞模式启动CLI，确保显示并接受输入
     CLI(net)
-    
+
     info('*** 停止网络\n')
-    net.stop() 
+    net.stop()

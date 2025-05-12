@@ -51,6 +51,7 @@ RUN if [ ! -d "/usr/lib/python3/dist-packages/mininet" ]; then \
 
 # 安装OVS Python库
 RUN pip3 install ovs
+RUN pip3 install networkx
 
 # 确保mnexec在PATH中
 RUN if [ ! -f "/usr/local/bin/mnexec" ] && [ -f "/usr/bin/mnexec" ]; then \
@@ -72,6 +73,7 @@ RUN chmod +x /start.sh
 
 # 确保 run_network.sh 是可执行的
 RUN chmod +x /root/sdn/run_network.sh
+RUN chmod +x /root/sdn/run_datacenter_network.sh
 
 # 暴露Ryu控制器端口
 EXPOSE 6633 8080

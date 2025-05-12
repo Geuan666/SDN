@@ -1,4 +1,4 @@
-.PHONY: build run run-shell run-network run-ryu run-mininet stop clean logs help test compose-up compose-down compose-logs
+.PHONY: build run run-shell run-network run-ryu run-mininet stop clean logs help test compose-up compose-down compose-logs run-datacenter run-datacenter-controller run-datacenter-topo
 
 # 镜像名称和容器名称
 IMAGE_NAME = sdn-ryu-mininet
@@ -16,6 +16,8 @@ help:
 	@echo "  make run-network   - 直接启动完整网络环境（自动选择选项1）"
 	@echo "  make run-ryu       - 仅运行Ryu控制器"
 	@echo "  make run-mininet   - 仅运行Mininet拓扑"
+	@echo "  make run-dcn       - 启动数据中心网络拓扑"
+	@echo "  make run-dcn-controller - 启动数据中心控制器"
 	@echo "  make stop          - 停止所有运行中的容器"
 	@echo "  make logs          - 查看容器日志"
 	@echo "  make clean         - 清理所有相关资源"
@@ -52,6 +54,40 @@ run-shell:
 		-p 8080:8080 \
 		-e TERM=xterm \
 		$(IMAGE_NAME) bash
+
+# 运行数据中心网络环境
+run-datacenter:
+	@echo "启动数据中心网络环境..."
+	-docker run --rm -it \
+		--name $(CONTAINER_NAME)-datacenter \
+		--privileged \
+		-p 6633:6633 \
+		-p 8080:8080 \
+		-e TERM=xterm \
+		$(IMAGE_NAME) bash -c './run_datacenter_network.sh auto'
+	@echo "数据中心网络环境已停止"
+
+# 仅运行数据中心控制器
+run-datacenter-controller:
+	@echo "启动数据中心控制器..."
+	docker run --rm -it \
+		--name $(CONTAINER_NAME)-datacenter-ryu \
+		--privileged \
+		-p 6633:6633 \
+		-p 8080:8080 \
+		$(IMAGE_NAME) ryu-manager --verbose datacenter_controller.py
+
+# 仅运行数据中心拓扑
+run-datacenter-topo:
+	@echo "启动数据中心拓扑..."
+	@CONTROLLER_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(CONTAINER_NAME)-datacenter-ryu 2>/dev/null || echo "127.0.0.1"); \
+	echo "使用控制器 IP: $$CONTROLLER_IP"; \
+	docker run --rm -it \
+	--name $(CONTAINER_NAME)-datacenter-mininet \
+	--privileged \
+	-e TERM=xterm \
+	-e CONTROLLER_IP=$$CONTROLLER_IP \
+	$(IMAGE_NAME) bash -c "python3 datacenter_topo.py"
 
 # 直接启动网络 - 自动选择选项1
 run-network:

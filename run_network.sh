@@ -57,7 +57,7 @@ start_ryu_controller() {
     fi
     
     # 启动控制器，重定向输出到日志文件
-    ryu-manager --verbose simple_switch.py > ryu.log 2>&1 &
+    ryu-manager --verbose router_switch.py > ryu.log 2>&1 &
     RYU_PID=$!
 
     # 检查控制器是否成功启动
