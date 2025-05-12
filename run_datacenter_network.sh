@@ -15,15 +15,15 @@ service openvswitch-switch start
 
 # 启动Ryu控制器
 echo "启动简化版数据中心控制器..."
-ryu-manager --verbose datacenter_controller.py > simple_dc.log 2>&1 &
+ryu-manager --verbose datacenter_controller.py > datacenter_ryu.log 2>&1 &
 RYU_PID=$!
 
 # 检查控制器是否成功启动
 echo "等待控制器启动..."
-sleep 5
+sleep 10  # 增加等待时间，确保控制器完全启动
 if ! ps -p $RYU_PID > /dev/null; then
     echo "控制器启动失败!"
-    cat datacenter_ryu.log
+    cat datacenter_ryu.log  # 确保日志文件名称一致
     exit 1
 fi
 echo "控制器已启动!"
