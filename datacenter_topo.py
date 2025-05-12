@@ -21,11 +21,12 @@ def createDatacenterNet():
 
     # 添加交换机 - 外部网络
     info('*** 添加外部网络交换机\n')
+    # 确保dpid为1，与控制器一致
     external_switch = net.addSwitch('ex', dpid='0000000000000001')
 
     # 添加交换机 - 数据中心网络
     info('*** 添加数据中心网络交换机\n')
-    # 边缘路由器
+    # 边缘路由器 - 确保dpid为2，与控制器中的edge_router_dpid=2一致
     edge_router = net.addSwitch('ed', dpid='0000000000000002')
 
     # 汇聚层交换机
@@ -38,36 +39,36 @@ def createDatacenterNet():
     leaf2 = net.addSwitch('l2', dpid='0000000000000007')
     leaf3 = net.addSwitch('l3', dpid='0000000000000008')
     leaf4 = net.addSwitch('l4', dpid='0000000000000009')
-    leaf5 = net.addSwitch('l5', dpid='000000000000000a')
+    leaf5 = net.addSwitch('l5', dpid='0000000000000010')
 
-    # 注意：统一所有主机到一个单一的平坦网络 10.0.0.0/8
+    # 添加主机 - 外部网络 (使用/16掩码，与控制器中的10.0.0.0/16匹配)
     info('*** 添加外部网络主机\n')
-    h6 = net.addHost('h6', mac='00:00:00:00:00:06', ip='10.0.0.6/8')
-    h7 = net.addHost('h7', mac='00:00:00:00:00:07', ip='10.0.0.7/8')
-    h8 = net.addHost('h8', mac='00:00:00:00:00:08', ip='10.0.0.8/8')
+    h6 = net.addHost('h6', mac='00:00:00:00:00:06', ip='10.0.6.1/16')
+    h7 = net.addHost('h7', mac='00:00:00:00:00:07', ip='10.0.7.1/16')
+    h8 = net.addHost('h8', mac='00:00:00:00:00:08', ip='10.0.8.1/16')
 
-    # 添加主机 - 数据中心网络主机
+    # 添加主机 - 数据中心网络 (使用/16掩码，与控制器中的10.1.0.0/16匹配)
     info('*** 添加数据中心网络主机\n')
     # Leaf1连接的主机
-    h1a = net.addHost('h1a', mac='00:00:00:00:01:01', ip='10.0.0.11/8')
-    h1b = net.addHost('h1b', mac='00:00:00:00:01:02', ip='10.0.0.12/8')
+    h1a = net.addHost('h1a', mac='00:00:00:00:01:01', ip='10.1.1.1/16')
+    h1b = net.addHost('h1b', mac='00:00:00:00:01:02', ip='10.1.1.2/16')
 
     # Leaf2连接的主机
-    h2a = net.addHost('h2a', mac='00:00:00:00:02:01', ip='10.0.0.21/8')
-    h2b = net.addHost('h2b', mac='00:00:00:00:02:02', ip='10.0.0.22/8')
+    h2a = net.addHost('h2a', mac='00:00:00:00:02:01', ip='10.1.2.1/16')
+    h2b = net.addHost('h2b', mac='00:00:00:00:02:02', ip='10.1.2.2/16')
 
     # Leaf3连接的主机
-    h3a = net.addHost('h3a', mac='00:00:00:00:03:01', ip='10.0.0.31/8')
-    h3b = net.addHost('h3b', mac='00:00:00:00:03:02', ip='10.0.0.32/8')
+    h3a = net.addHost('h3a', mac='00:00:00:00:03:01', ip='10.1.3.1/16')
+    h3b = net.addHost('h3b', mac='00:00:00:00:03:02', ip='10.1.3.2/16')
 
     # Leaf4连接的主机
-    h4a = net.addHost('h4a', mac='00:00:00:00:04:01', ip='10.0.0.41/8')
-    h4b = net.addHost('h4b', mac='00:00:00:00:04:02', ip='10.0.0.42/8')
+    h4a = net.addHost('h4a', mac='00:00:00:00:04:01', ip='10.1.4.1/16')
+    h4b = net.addHost('h4b', mac='00:00:00:00:04:02', ip='10.1.4.2/16')
 
     # Leaf5连接的清洗服务器
-    h5a = net.addHost('h5a', mac='00:00:00:00:05:01', ip='10.0.0.51/8')
-    h5b = net.addHost('h5b', mac='00:00:00:00:05:02', ip='10.0.0.52/8')
-    h5c = net.addHost('h5c', mac='00:00:00:00:05:03', ip='10.0.0.53/8')
+    h5a = net.addHost('h5a', mac='00:00:00:00:05:01', ip='10.1.5.1/16')
+    h5b = net.addHost('h5b', mac='00:00:00:00:05:02', ip='10.1.5.2/16')
+    h5c = net.addHost('h5c', mac='00:00:00:00:05:03', ip='10.1.5.3/16')
 
     # 创建链路 - 外部网络
     info('*** 创建外部网络链路\n')
@@ -125,9 +126,6 @@ def createDatacenterNet():
     # 启动网络
     info('*** 启动网络\n')
     net.build()
-
-    # 启动控制器
-    info('*** 启动控制器\n')
     c0.start()
 
     # 启动所有交换机
@@ -143,22 +141,29 @@ def createDatacenterNet():
     leaf4.start([c0])
     leaf5.start([c0])
 
+    # 配置主机默认网关 - 与控制器中定义的网关IP匹配
+    info('*** 配置默认网关\n')
+    # 外部网络主机配置网关 - 10.0.0.254 (与控制器中的 self.gateway_macs 匹配)
+    h6.cmd('ip route add default via 10.0.0.254')
+    h7.cmd('ip route add default via 10.0.0.254')
+    h8.cmd('ip route add default via 10.0.0.254')
+
+    # 数据中心网络主机配置网关 - 10.1.0.254 (与控制器中的 self.gateway_macs 匹配)
+    h1a.cmd('ip route add default via 10.1.0.254')
+    h1b.cmd('ip route add default via 10.1.0.254')
+    h2a.cmd('ip route add default via 10.1.0.254')
+    h2b.cmd('ip route add default via 10.1.0.254')
+    h3a.cmd('ip route add default via 10.1.0.254')
+    h3b.cmd('ip route add default via 10.1.0.254')
+    h4a.cmd('ip route add default via 10.1.0.254')
+    h4b.cmd('ip route add default via 10.1.0.254')
+    h5a.cmd('ip route add default via 10.1.0.254')
+    h5b.cmd('ip route add default via 10.1.0.254')
+    h5c.cmd('ip route add default via 10.1.0.254')
+
     # 等待控制器连接
     info('*** 等待控制器连接\n')
     time.sleep(5)
-
-    # 配置交换机STP启用
-    info('*** 配置STP (避免环路)\n')
-    for s in net.switches:
-        s.cmd('ovs-vsctl set bridge {} stp_enable=true'.format(s.name))
-    time.sleep(2)  # 等待STP收敛
-
-    # 确保主机间通信
-    info('*** 触发初始ARP请求\n')
-    for h in net.hosts:
-        for target in net.hosts:
-            if h != target:
-                h.cmd('ping -c 1 -W 1 {} >/dev/null 2>&1 &'.format(target.IP()))
 
     return net
 
