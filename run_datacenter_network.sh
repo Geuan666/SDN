@@ -20,7 +20,7 @@ RYU_PID=$!
 
 # 检查控制器是否成功启动
 echo "等待控制器启动..."
-sleep 10  # 增加等待时间，确保控制器完全启动
+sleep 6  # 增加等待时间，确保控制器完全启动
 if ! ps -p $RYU_PID > /dev/null; then
     echo "控制器启动失败!"
     cat datacenter_ryu.log  # 确保日志文件名称一致
