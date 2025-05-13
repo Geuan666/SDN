@@ -42,34 +42,34 @@ def createDatacenterNet():
     leaf4 = net.addSwitch('l4', dpid='0000000000000009', protocols='OpenFlow13')
     leaf5 = net.addSwitch('l5', dpid='0000000000000010', protocols='OpenFlow13')
 
-    # 添加主机 - 外部网络 (使用/16掩码，与控制器中的10.0.0.0/16匹配)
+    # 添加主机 - 外部网络
     info('*** 添加外部网络主机\n')
-    h6 = net.addHost('h6', mac='00:00:00:00:00:06', ip='10.0.6.1/16')
-    h7 = net.addHost('h7', mac='00:00:00:00:00:07', ip='10.0.7.1/16')
-    h8 = net.addHost('h8', mac='00:00:00:00:00:08', ip='10.0.8.1/16')
+    h6 = net.addHost('h6', mac='00:00:00:00:00:06', ip='2001:db8:1::6/64')
+    h7 = net.addHost('h7', mac='00:00:00:00:00:07', ip='2001:db8:1::7/64')
+    h8 = net.addHost('h8', mac='00:00:00:00:00:08', ip='2001:db8:1::8/64')
 
-    # 添加主机 - 数据中心网络 (使用/16掩码，与控制器中的10.1.0.0/16匹配)
+    # 添加主机 - 数据中心网络
     info('*** 添加数据中心网络主机\n')
     # Leaf1连接的主机
-    h1a = net.addHost('h1a', mac='00:00:00:00:01:01', ip='10.1.1.1/16')
-    h1b = net.addHost('h1b', mac='00:00:00:00:01:02', ip='10.1.1.2/16')
+    h1a = net.addHost('h1a', mac='00:00:00:00:01:01', ip='2001:db8:2:1::1/64')
+    h1b = net.addHost('h1b', mac='00:00:00:00:01:02', ip='2001:db8:2:1::2/64')
 
     # Leaf2连接的主机
-    h2a = net.addHost('h2a', mac='00:00:00:00:02:01', ip='10.1.2.1/16')
-    h2b = net.addHost('h2b', mac='00:00:00:00:02:02', ip='10.1.2.2/16')
+    h2a = net.addHost('h2a', mac='00:00:00:00:02:01', ip='2001:db8:2:2::1/64')
+    h2b = net.addHost('h2b', mac='00:00:00:00:02:02', ip='2001:db8:2:2::2/64')
 
     # Leaf3连接的主机
-    h3a = net.addHost('h3a', mac='00:00:00:00:03:01', ip='10.1.3.1/16')
-    h3b = net.addHost('h3b', mac='00:00:00:00:03:02', ip='10.1.3.2/16')
+    h3a = net.addHost('h3a', mac='00:00:00:00:03:01', ip='2001:db8:2:3::1/64')
+    h3b = net.addHost('h3b', mac='00:00:00:00:03:02', ip='2001:db8:2:3::2/64')
 
     # Leaf4连接的主机
-    h4a = net.addHost('h4a', mac='00:00:00:00:04:01', ip='10.1.4.1/16')
-    h4b = net.addHost('h4b', mac='00:00:00:00:04:02', ip='10.1.4.2/16')
+    h4a = net.addHost('h4a', mac='00:00:00:00:04:01', ip='2001:db8:2:4::1/64')
+    h4b = net.addHost('h4b', mac='00:00:00:00:04:02', ip='2001:db8:2:4::2/64')
 
     # Leaf5连接的清洗服务器
-    h5a = net.addHost('h5a', mac='00:00:00:00:05:01', ip='10.1.5.1/16')
-    h5b = net.addHost('h5b', mac='00:00:00:00:05:02', ip='10.1.5.2/16')
-    h5c = net.addHost('h5c', mac='00:00:00:00:05:03', ip='10.1.5.3/16')
+    h5a = net.addHost('h5a', mac='00:00:00:00:05:01', ip='2001:db8:2:5::1/64')
+    h5b = net.addHost('h5b', mac='00:00:00:00:05:02', ip='2001:db8:2:5::2/64')
+    h5c = net.addHost('h5c', mac='00:00:00:00:05:03', ip='2001:db8:2:5::3/64')
 
     # 创建链路 - 外部网络
     info('*** 创建外部网络链路\n')
@@ -144,47 +144,47 @@ def createDatacenterNet():
 
     # 配置主机默认网关 - 与控制器中定义的网关IP匹配
     info('*** 配置默认网关\n')
-    # 外部网络主机配置网关 - 10.0.0.254 (与控制器中的 self.gateway_macs 匹配)
-    h6.cmd('ip route add default via 10.0.0.254')
-    h7.cmd('ip route add default via 10.0.0.254')
-    h8.cmd('ip route add default via 10.0.0.254')
+    # 外部网络主机配置网关
+    h6.cmd('ip -6 route add default via 2001:db8:1::ffff')
+    h7.cmd('ip -6 route add default via 2001:db8:1::ffff')
+    h8.cmd('ip -6 route add default via 2001:db8:1::ffff')
 
-    # 数据中心网络主机配置网关 - 10.1.0.254 (与控制器中的 self.gateway_macs 匹配)
-    h1a.cmd('ip route add default via 10.1.0.254')
-    h1b.cmd('ip route add default via 10.1.0.254')
-    h2a.cmd('ip route add default via 10.1.0.254')
-    h2b.cmd('ip route add default via 10.1.0.254')
-    h3a.cmd('ip route add default via 10.1.0.254')
-    h3b.cmd('ip route add default via 10.1.0.254')
-    h4a.cmd('ip route add default via 10.1.0.254')
-    h4b.cmd('ip route add default via 10.1.0.254')
-    h5a.cmd('ip route add default via 10.1.0.254')
-    h5b.cmd('ip route add default via 10.1.0.254')
-    h5c.cmd('ip route add default via 10.1.0.254')
+    # 数据中心网络主机配置网关
+    h1a.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h1b.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h2a.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h2b.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h3a.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h3b.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h4a.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h4b.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h5a.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h5b.cmd('ip -6 route add default via 2001:db8:2::ffff')
+    h5c.cmd('ip -6 route add default via 2001:db8:2::ffff')
 
-    # 初始化网关的ARP表
-    info('*** 初始化主机ARP表\n')
-    # 外部网络主机的网关ARP
-    h6.cmd('arp -s 10.0.0.254 00:00:00:00:00:f0')
-    h7.cmd('arp -s 10.0.0.254 00:00:00:00:00:f0')
-    h8.cmd('arp -s 10.0.0.254 00:00:00:00:00:f0')
+    # 初始化邻居表
+    info('*** 初始化主机邻居表\n')
+    # 外部网络主机的网关邻居
+    h6.cmd('ip -6 neigh add 2001:db8:1::ffff lladdr 00:00:00:00:00:f0 dev h6-eth0')
+    h7.cmd('ip -6 neigh add 2001:db8:1::ffff lladdr 00:00:00:00:00:f0 dev h7-eth0')
+    h8.cmd('ip -6 neigh add 2001:db8:1::ffff lladdr 00:00:00:00:00:f0 dev h8-eth0')
 
-    # 数据中心网络主机的网关ARP
-    h1a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h1b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h2a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h2b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h3a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h3b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h4a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h4b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h5a.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h5b.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
-    h5c.cmd('arp -s 10.1.0.254 00:00:00:00:00:f0')
+    # 数据中心网络主机的网关邻居
+    h1a.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h1a-eth0')
+    h1b.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h1b-eth0')
+    h2a.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h2a-eth0')
+    h2b.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h2b-eth0')
+    h3a.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h3a-eth0')
+    h3b.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h3b-eth0')
+    h4a.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h4a-eth0')
+    h4b.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h4b-eth0')
+    h5a.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h5a-eth0')
+    h5b.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h5b-eth0')
+    h5c.cmd('ip -6 neigh add 2001:db8:2::ffff lladdr 00:00:00:00:00:f0 dev h5c-eth0')
 
     # 等待控制器连接
     info('*** 等待控制器连接\n')
-    time.sleep(10)  # 增加到10秒，确保控制器有足够时间初始化
+    time.sleep(10)  # 保持10秒的等待时间
 
     return net
 
